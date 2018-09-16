@@ -25,6 +25,18 @@ proc new-page {} {
     setCurrentPage $page
 }
 
+proc open-page {} {
+    global currentPage
+
+    set selection [.tree selection]
+    set values [.tree item $selection -values]
+    set id [lindex $values 0]
+
+    #set currentPage [getPage $id]
+    setCurrentPage [getPage $id]
+
+}
+
 proc save-page { cup } {
     global currentPage
 
@@ -44,6 +56,9 @@ proc setCurrentPage { page } {
 
     .frame.text delete 0.0 end
     .frame.text insert 0.0 [$page getText]
+
+    .frame.title delete 0 end
+    .frame.title insert 0 [$page getTitle]
 }
 
 proc list-pages {} {
@@ -60,9 +75,8 @@ proc list-pages {} {
     for {set i 0} {$i < [llength $diaryPages]} {incr i} {
         set elem [lindex $diaryPages $i]
         puts "elem... $elem"
-        set item [.tree insert {} end]
+        set item [.tree insert {} end -values [list [$elem getId] [$elem getTitle]]]
 
-        .tree item $item -values [list [$elem getTitle] [$elem getText]]
 
         puts "getTitle: [$elem getTitle]"
         #.tree item $item -values [list wow lol tri]
@@ -77,6 +91,7 @@ menu .menubar.filemenu -tearoff 0
 .menubar.filemenu add command -label "Create new Top level page" -command { new-page }
 .menubar.filemenu add command -label "Save" -command { save-page currentPage}
 .menubar add cascade -label "File" -menu .menubar.filemenu
+.menubar add cascade -label "Page" -menu .menubar.filemenu
 
 panedwindow .pw -orient vertical
 frame .frame
@@ -92,6 +107,7 @@ pack .frame.text -fill both -expand yes
 ttk::treeview .tree -columns {id Title}
 .tree heading id -text Id
 .tree heading Title -text Title
+bind .tree <<TreeviewSelect>> { open-page }
 
 .pw add .tree -minsize 20
 .pw add .frame -minsize 30

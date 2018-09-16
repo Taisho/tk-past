@@ -41,14 +41,18 @@ oo::class create Page {
     }
 
     method setTitle { in_title } {
-        my variable text
-        set text $in_title
+        my variable title
+        set title $in_title
     }
 
     method save {} {
         my variable id
         my variable text
         my variable title
+
+        puts $id
+        puts $text
+        puts $title
 
         if { $id == 0 } {
             db eval {
@@ -79,4 +83,15 @@ proc getPages { list } {
     }
 
     puts "length: [llength $pages]"
+}
+
+proc getPage { id } {
+    variable page
+    
+    db eval {SELECT * FROM Page WHERE id = $id} {
+        set page [Page new $id $title $text]
+        puts "from Page: $id $title $text"
+    }
+
+    return $page
 }
