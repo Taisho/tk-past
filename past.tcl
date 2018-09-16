@@ -63,6 +63,11 @@ proc setCurrentPage { page } {
 
 proc list-pages {} {
     global currentPage
+
+    # Remove current items in the grid
+
+    .tree delete [.tree children {}]
+
     set diaryPages [list]
     getPages diaryPages 
     puts "length: [llength $diaryPages]"
@@ -77,7 +82,6 @@ proc list-pages {} {
         puts "elem... $elem"
         set item [.tree insert {} end -values [list [$elem getId] [$elem getTitle]]]
 
-
         puts "getTitle: [$elem getTitle]"
         #.tree item $item -values [list wow lol tri]
     }
@@ -91,7 +95,11 @@ menu .menubar.filemenu -tearoff 0
 .menubar.filemenu add command -label "Create new Top level page" -command { new-page }
 .menubar.filemenu add command -label "Save" -command { save-page currentPage}
 .menubar add cascade -label "File" -menu .menubar.filemenu
-.menubar add cascade -label "Page" -menu .menubar.filemenu
+
+menu .menubar.pagemenu -tearoff 0
+.menubar.pagemenu add command -label "Refresh Pages" -command { list-pages }
+.menubar add cascade -label "Page" -menu .menubar.pagemenu
+
 
 panedwindow .pw -orient vertical
 frame .frame
