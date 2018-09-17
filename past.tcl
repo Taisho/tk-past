@@ -47,7 +47,7 @@ proc open-page {} {
     }
 }
 
-proc save-page { cup } {
+proc save-page {} {
     global currentPage
 
     if {![info exists currentPage]} {
@@ -111,12 +111,72 @@ proc deletePageGUI {} {
     }
 }
 
+namespace eval ::kbd {
+    variable ctrlPressed 0
+    variable s_Pressed 0
+    
+    variable lock_Ctrl_s 0
+    variable handler_Ctrl_s {}
+
+    proc setHandler { seq script } {
+        variable handler_Ctrl_s
+
+        eval "set handler_$seq {$script} "
+    }
+
+    proc handle {} {
+        variable ctrlPressed
+        variable s_Pressed
+        variable lock_Ctrl_s
+        variable handler_Ctrl_s
+
+        if { $ctrlPressed == 1 && $s_Pressed == 1 && $lock_Ctrl_s == 0} {
+            set lock_Ctrl_s 1
+            puts {eval $handler_Ctrl_s}
+            eval $handler_Ctrl_s
+        }
+    }
+
+    proc key-press { n k } {
+        variable ctrlPressed
+        variable s_Pressed
+        variable lock_Ctrl_s
+
+        switch -- $k Control_L {
+            set ctrlPressed 1
+        } s {
+            set s_Pressed 1
+        } 
+
+        handle
+        puts "press:$k"
+    }
+
+    proc key-release { n k } {
+        variable ctrlPressed
+        variable s_Pressed
+        variable lock_Ctrl_s
+
+        switch -- $k Control_L {
+            set ctrlPressed 0
+        } s {
+            set s_Pressed 0
+        } 
+
+        if { $s_Pressed == 0 && $ctrlPressed == 0} {
+            set lock_Ctrl_s 0
+        }
+
+        puts "release:$k"
+    }
+}
+
 menu .menubar
 . configure -menu .menubar
 
 menu .menubar.filemenu -tearoff 0
 .menubar.filemenu add command -label "Create new Top level page" -command { new-page }
-.menubar.filemenu add command -label "Save" -command { save-page currentPage}
+.menubar.filemenu add command -label "Save" -command { save-page }
 .menubar.filemenu add separator
 .menubar.filemenu add command -label "Exit" -command { exit }
 .menubar add cascade -label "File" -menu .menubar.filemenu
@@ -126,6 +186,12 @@ menu .menubar.pagemenu -tearoff 0
 .menubar.pagemenu add command -label "Refresh Pages" -command { list-pages }
 .menubar add cascade -label "Page" -menu .menubar.pagemenu
 
+
+ #     
+ ## 
+ ### Assembling our window
+ ##
+ #
 
 panedwindow .pw -orient vertical
 frame .frame
@@ -137,11 +203,22 @@ pack .frame.label_title -fill x -expand no
 pack .frame.title -fill x -expand no 
 pack .frame.label_text -fill x -expand no 
 pack .frame.text -fill both -expand yes
+#StatusBar .status
+
+
+ #     
+ ## 
+ ### Now working on the treview widget
+ ##
+ #
 
 ttk::treeview .tree -columns {id Title}
 .tree heading id -text Id
 .tree heading Title -text Title
 bind .tree <<TreeviewSelect>> { open-page }
+bind . <KeyPress> { ::kbd::key-press %N %K }
+bind . <KeyRelease> { ::kbd::key-release %N %K }
+::kbd::setHandler Ctrl_s { save-page }
 
 .pw add .tree -minsize 20
 .pw add .frame -minsize 30

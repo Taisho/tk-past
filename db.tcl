@@ -60,6 +60,8 @@ oo::class create Page {
                 (text, title)
                 VALUES ( $text, $title )
             }
+
+            set id [db last_insert_rowid]
         } else {
             db eval {
                 UPDATE page 
@@ -67,8 +69,6 @@ oo::class create Page {
                 title = $title
                 WHERE id == $id
             }
-
-            set id [db last_insert_rowid]
         }
     }
 }
@@ -80,7 +80,7 @@ proc deletePage { pageId } {
 proc getPages { list } {
     upvar $list pages
 
-    db eval {SELECT * FROM Page WHERE deleted != 1} {
+    db eval {SELECT * FROM Page WHERE deleted != 1 ORDER BY id DESC} {
         upvar pages pagess
         lappend pages [Page new $id $title $text]
         puts "from Page: $id $title $text"
