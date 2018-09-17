@@ -4,6 +4,9 @@ source db.tcl
 
 #currentPage hold the object of currently edited page
 
+#the index of "Delete Page" item in the Page menu
+set men_delete_page 0
+
 #menu .mb
 #.mb add cascade -label System -menu .mb.system
 #. configure -menu .mb
@@ -20,21 +23,28 @@ source db.tcl
 #}
 
 proc new-page {} {
+    global men_delete_page
+
     set page [Page new 0 "" ""]
     puts "object name is $page"
     setCurrentPage $page
+    .menubar.pagemenu entryconfigure $men_delete_page -state disabled
 }
 
 proc open-page {} {
     global currentPage
+    global men_delete_page
 
     set selection [.tree selection]
-    set values [.tree item $selection -values]
-    set id [lindex $values 0]
+    if {[llength [list [split $selection { }]]] == 1} {
+        set values [.tree item $selection -values]
+        set id [lindex $values 0]
 
-    #set currentPage [getPage $id]
-    setCurrentPage [getPage $id]
+        #set currentPage [getPage $id]
+        setCurrentPage [getPage $id]
 
+        .menubar.pagemenu entryconfigure $men_delete_page -state normal
+    }
 }
 
 proc save-page { cup } {
@@ -46,6 +56,7 @@ proc save-page { cup } {
         $currentPage setTitle "[.frame.title get]"
         $currentPage setText "[.frame.text get 0.0 end]"
         $currentPage save
+        list-pages
     }
 }
 
@@ -59,6 +70,7 @@ proc setCurrentPage { page } {
 
     .frame.title delete 0 end
     .frame.title insert 0 [$page getTitle]
+
 }
 
 proc list-pages {} {
@@ -72,10 +84,10 @@ proc list-pages {} {
     getPages diaryPages 
     puts "length: [llength $diaryPages]"
 
-    puts "diaryPages: $diaryPages"
-    if {[info exists currentPage] && [$currentPage getId] == 0 } {
-        lappend diaryPages $currentPage    
-    }
+#    puts "diaryPages: $diaryPages"
+#    if {[info exists currentPage] && [$currentPage getId] == 0 } {
+#        lappend diaryPages $currentPage    
+#    }
     puts "length: [llength $diaryPages]"
     for {set i 0} {$i < [llength $diaryPages]} {incr i} {
         set elem [lindex $diaryPages $i]
@@ -87,6 +99,17 @@ proc list-pages {} {
     }
 }
 
+proc deletePageGUI {} {
+    global currentPage
+
+    if {[winfo exists currentPage]} {
+        messageBox -message {Please select a page first}
+    } else {
+        deletePage [$currentPage getId]
+        list-pages
+        new-page
+    }
+}
 
 menu .menubar
 . configure -menu .menubar
@@ -94,9 +117,12 @@ menu .menubar
 menu .menubar.filemenu -tearoff 0
 .menubar.filemenu add command -label "Create new Top level page" -command { new-page }
 .menubar.filemenu add command -label "Save" -command { save-page currentPage}
+.menubar.filemenu add separator
+.menubar.filemenu add command -label "Exit" -command { exit }
 .menubar add cascade -label "File" -menu .menubar.filemenu
 
 menu .menubar.pagemenu -tearoff 0
+.menubar.pagemenu add command -label "Delete selected page" -command { deletePageGUI }
 .menubar.pagemenu add command -label "Refresh Pages" -command { list-pages }
 .menubar add cascade -label "Page" -menu .menubar.pagemenu
 
@@ -122,3 +148,4 @@ bind .tree <<TreeviewSelect>> { open-page }
 pack .pw -fill both -expand yes
 
 list-pages
+new-page

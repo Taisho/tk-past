@@ -73,10 +73,14 @@ oo::class create Page {
     }
 }
 
+proc deletePage { pageId } {
+    db eval {UPDATE Page SET deleted = 1 WHERE id = $pageId} {}
+}
+
 proc getPages { list } {
     upvar $list pages
 
-    db eval {SELECT * FROM Page} {
+    db eval {SELECT * FROM Page WHERE deleted != 1} {
         upvar pages pagess
         lappend pages [Page new $id $title $text]
         puts "from Page: $id $title $text"
