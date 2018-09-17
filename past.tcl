@@ -171,9 +171,16 @@ namespace eval ::kbd {
     }
 }
 
+ #     
+ ## 
+ ### Create standart menus (at the top of the window)
+ ##
+ #
+
 menu .menubar
 . configure -menu .menubar
 
+# File
 menu .menubar.filemenu -tearoff 0
 .menubar.filemenu add command -label "Create new Top level page" -command { new-page }
 .menubar.filemenu add command -label "Save" -command { save-page }
@@ -181,11 +188,19 @@ menu .menubar.filemenu -tearoff 0
 .menubar.filemenu add command -label "Exit" -command { exit }
 .menubar add cascade -label "File" -menu .menubar.filemenu
 
+# Page
 menu .menubar.pagemenu -tearoff 0
 .menubar.pagemenu add command -label "Delete selected page" -command { deletePageGUI }
 .menubar.pagemenu add command -label "Refresh Pages" -command { list-pages }
 .menubar add cascade -label "Page" -menu .menubar.pagemenu
 
+# Format
+menu .menubar.formatmenu -tearoff 0
+.menubar.formatmenu add command -label "Bold" -state disabled 
+.menubar.formatmenu add command -label "Italics" -state disabled 
+.menubar.formatmenu add separator
+.menubar.formatmenu add command -label "Font Size" -state disabled
+.menubar add cascade -label "Format" -menu .menubar.formatmenu
 
  #     
  ## 
@@ -205,6 +220,14 @@ pack .frame.label_text -fill x -expand no
 pack .frame.text -fill both -expand yes
 #StatusBar .status
 
+ #     
+ ## 
+ ### Binding keyboard events to the text widget
+ ##
+ #
+
+bind .frame.text <<Selection>> { }
+
 
  #     
  ## 
@@ -215,7 +238,18 @@ pack .frame.text -fill both -expand yes
 ttk::treeview .tree -columns {id Title}
 .tree heading id -text Id
 .tree heading Title -text Title
+.tree column #0 -width 10 -stretch 0
+.tree column id -width 30 -stretch 0
+
+
 bind .tree <<TreeviewSelect>> { open-page }
+
+ #     
+ ## 
+ ### Pack the treeview and the frame in the PanedWindow
+ ##
+ #
+
 bind . <KeyPress> { ::kbd::key-press %N %K }
 bind . <KeyRelease> { ::kbd::key-release %N %K }
 ::kbd::setHandler Ctrl_s { save-page }
